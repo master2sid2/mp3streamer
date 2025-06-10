@@ -27,14 +27,14 @@
           <progress class="progress is-small is-primary" max="100">Loading</progress>
         </div>
       </div>
-      <!--<div class="tabs is-toggle is-fullwidth is-centered is-hidden-tablet">
+      <div class="tabs is-toggle is-fullwidth is-centered is-hidden-tablet">
         <ul>
           <li class="is-active"><a id="tab-playlists">Playlists</a></li>
           <li><a id="tab-tracks">Tracks</a></li>
         </ul>
-      </div> -->
+      </div>
       <!-- Контент -->
-      <div class="columns is-mobile fixed-columns">
+      <div class="columns is-mobile is-fixed-columns">
         <!-- Плейлисты -->
         <div class="column is-one-quarter">
           <aside class="menu">
@@ -44,24 +44,23 @@
             </ul>
           </aside>
         </div>
-
         <!-- Треки -->
         <div class="column">
           <div class="table-container">
- <div class="table-wrapper">
-            <table class="table is-striped is-hoverable is-fullwidth">
-              <thead>
-                <tr>
-                  <th>🎧 Track</th>
-                  <th>⏱ Duration</th>
-                </tr>
-              </thead>
-              <tbody id="track-list">
-                <!-- JS будет заполнять эту таблицу -->
-              </tbody>
-            </table>
+            <div class="table-wrapper">
+              <table class="table is-striped is-hoverable is-fullwidth">
+                <thead>
+                  <tr>
+                    <th>🎧 Track</th>
+                    <th>⏱ Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="track-list">
+                  <!-- JS будет заполнять эту таблицу -->
+                </tbody>
+              </table>
+            </div>
           </div>
-</div>
         </div>
       </div>
     </div>

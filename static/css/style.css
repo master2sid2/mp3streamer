@@ -1,79 +1,161 @@
-    /* Ensure the body takes full height and no margin */
-    html, body {
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-    }
+/* Ensure the body takes full height and no margin */
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow-y: auto; /* Разрешаем скролл для всей страницы */
+}
 
-    /* Fixed player at the top */
-    .fixed-player {
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      background-color: white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      padding: 1rem;
-    }
+/* Fixed player at the top */
+.fixed-player {
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  padding: 1rem;
+}
 
-    /* Fixed footer at the bottom */
-    .footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      background-color: #f5f5f5;
-      padding: 1rem;
-    }
+/* Fixed footer at the bottom */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #f5f5f5;
+  padding: 1rem;
+}
 
-    /* Scrollable content area between player and footer */
-    .scrollable-content {
-      position: fixed;
-      top: 200px; /* Adjust based on player height */
-      bottom: 60px; /* Adjust based on footer height */
-      left: 0;
-      right: 0;
-      overflow-y: auto;
-      padding: 1rem;
-    }
+/* Scrollable content area */
+.section {
+  padding-top: 220px; /* Учтите высоту плеера + табы */
+  padding-bottom: 80px; /* Учтите высоту футера */
+  min-height: calc(100vh - 300px); /* Учитываем фиксированные элементы */
+  overflow-y: auto;
+  box-sizing: border-box;
+}
 
-    /* Table wrapper for scrollable tracks */
-    .table-wrapper {
-      max-height: 800px; /* Adjust as needed */
-      overflow-y: auto;
-    }
+.scrollable-content {
+  position: relative; /* Убираем static, чтобы не мешать скроллу */
+  padding: 0;
+}
 
-    /* Highlight active playlist */
-    .menu-list li.is-active a {
-      background-color: #3273dc;
-      color: white;
-      font-weight: bold;
-    }
+/* Table wrapper for scrollable tracks */
+.table-wrapper {
+  max-height: 800px; /* Для десктопов */
+  overflow-y: auto;
+}
 
+/* Управление видимостью колонок на мобильных устройствах */
+@media screen and (max-width: 767px) {
+  .column.is-one-quarter {
+    display: block !important;
+    width: 100% !important; /* Гарантируем полную ширину */
+    max-width: 100% !important;
+    padding: 0.75rem;
+    box-sizing: border-box;
+  }
+  .column:not(.is-one-quarter) {
+    display: none !important;
+  }
+  .tracks-visible .column.is-one-quarter {
+    display: none !important;
+  }
+  .tracks-visible .column:not(.is-one-quarter) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0.75rem;
+    box-sizing: border-box;
+  }
+  /* Плавная анимация переключения */
+  .column {
+    transition: opacity 0.3s ease;
+    opacity: 1;
+  }
+  .column:not(.is-one-quarter) {
+    opacity: 0;
+  }
+  .tracks-visible .column:not(.is-one-quarter) {
+    opacity: 1;
+  }
+  .tracks-visible .column.is-one-quarter {
+    opacity: 0;
+  }
+  /* Адаптация высоты таблицы */
+  .table-wrapper {
+    max-height: calc(100vh - 300px); /* Подстройте под ваши размеры */
+    overflow-y: auto;
+  }
+}
+
+/* Стилизация табов */
+.tabs.is-toggle li.is-active a {
+  background-color: #3273dc;
+  color: white;
+  font-weight: bold;
+}
+
+.tabs.is-toggle a {
+  color: #4a4a4a; /* Мягкий серый, ближе к Bulma */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif; /* Современный шрифт */
+  font-size: 1rem; /* Уменьшаем размер */
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.tabs.is-toggle a:hover {
+  background-color: #f5f5f5;
+  color: #3273dc;
+}
+
+/* Highlight active playlist и стили для списка плейлистов */
 .menu-list li {
-  position: relative;
-  padding-right: 40px; /* Место для счетчика */
+  padding-right: 0; /* Убираем лишний отступ для счетчика */
 }
 
-.menu-list li a {
+.menu-list a {
   display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding-right: 10px;
+  white-space: normal; /* Разрешаем перенос текста */
+  overflow: visible;
+  text-overflow: clip;
+  padding: 0.5rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif; /* Современный шрифт */  font-size: 1.1rem; /* Уменьшаем размер */
+  font-weight: 500;
+  color: #4a4a4a; /* Мягкий серый */
+  text-transform: uppercase;
+  transition: color 0.3s ease; /* Плавная смена цвета при наведении */
 }
 
+.menu-list a:hover {
+  color: #3273dc; /* Цвет акцента при наведении */
+}
+
+.menu-list li.is-active a {
+  background-color: #3273dc;
+  color: white;
+  font-weight: bold;
+}
+
+/* Стили для элементов плейлиста */
 .playlist-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: 'Courier New', Courier, monospace;
+  padding: 0.5rem 1rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif; /* Современный шрифт */
+  font-size: 1.1em; /* Уменьшаем размер */
+  font-weight: 500; /* Убираем жирность */
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: #333;
+  color: #4a4a4a; /* Мягкий серый */
+}
+
+.playlist-item a {
+  flex: 1; /* Растягиваем ссылку на доступное пространство */
+  white-space: normal; /* Разрешаем перенос текста */
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .track-count {
@@ -81,20 +163,25 @@
   padding: 2px 8px;
   background-color: #4bd1e9;
   border-radius: 10px;
-  color: white;       /* чтобы текст был читаемым на цветном фоне */
-  font-size: 0.8rem;  /* чуть меньше текста для аккуратности */
+  color: white;
+  font-size: 0.9rem; /* Увеличиваем для лучшей читаемости */
 }
-
 
 .audio-player {
   width: 100%;
-  max-width: 600px; /* Adjust as needed */
+  max-width: 600px;
   box-sizing: border-box;
 }
 
 .cover-image {
-      width: 160px;
+  width: 160px;
   height: 160px;
-  object-fit: cover; /* чтобы изображение сохраняло пропорции и не искажалось */
-  display: block; /* чтобы убрать возможные отступы вокруг img */
+  object-fit: cover;
+  display: block;
+}
+
+/* Плавная смена обложки (уже в вашем JS, но добавим поддержку) */
+.cover-image.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
