@@ -1,0 +1,21 @@
+---
+# The example of docker-compose
+version: '3.8'
+
+services:
+  mp3server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8085:8085
+    volumes:
+      - music_data:/app/data/
+      - static_data:/app/static/
+      - templates_data:/app/templates/
+    restart: always
+
+volumes:
+  music_data:
+  static_data:
+  templates_data:
