@@ -1,0 +1,100 @@
+    /* Ensure the body takes full height and no margin */
+    html, body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* Fixed player at the top */
+    .fixed-player {
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      padding: 1rem;
+    }
+
+    /* Fixed footer at the bottom */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background-color: #f5f5f5;
+      padding: 1rem;
+    }
+
+    /* Scrollable content area between player and footer */
+    .scrollable-content {
+      position: fixed;
+      top: 200px; /* Adjust based on player height */
+      bottom: 60px; /* Adjust based on footer height */
+      left: 0;
+      right: 0;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    /* Table wrapper for scrollable tracks */
+    .table-wrapper {
+      max-height: 800px; /* Adjust as needed */
+      overflow-y: auto;
+    }
+
+    /* Highlight active playlist */
+    .menu-list li.is-active a {
+      background-color: #3273dc;
+      color: white;
+      font-weight: bold;
+    }
+
+.menu-list li {
+  position: relative;
+  padding-right: 40px; /* Место для счетчика */
+}
+
+.menu-list li a {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.playlist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Courier New', Courier, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: bold;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.track-count {
+  margin-left: 10px;
+  padding: 2px 8px;
+  background-color: #4bd1e9;
+  border-radius: 10px;
+  color: white;       /* чтобы текст был читаемым на цветном фоне */
+  font-size: 0.8rem;  /* чуть меньше текста для аккуратности */
+}
+
+
+.audio-player {
+  width: 100%;
+  max-width: 600px; /* Adjust as needed */
+  box-sizing: border-box;
+}
+
+.cover-image {
+      width: 160px;
+  height: 160px;
+  object-fit: cover; /* чтобы изображение сохраняло пропорции и не искажалось */
+  display: block; /* чтобы убрать возможные отступы вокруг img */
+}

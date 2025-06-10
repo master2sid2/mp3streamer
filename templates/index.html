@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MP3 Streamer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+</head>
+<body>
+  <section class="section">
+    <div class="container">
+              <!-- Плеер -->
+      <div class="box has-text-centered player-box fixed-player">
+      <h1 class="title">🎵 MP3 Streamer</h1>
+
+
+        <figure class="image is-128x128 is-inline-block mb-3 cover-container">
+          <img id="cover-image" src="/static/img/default.png" alt="Cover" loading="lazy" class="cover-image">
+        </figure>
+        <p class="is-size-5 has-text-weight-medium" id="current-title">Choose track</p>
+        <audio id="audio-player" controls class="audio-player">
+          Your browser does not support the audio element.
+        </audio>
+        <div class="loading-indicator is-hidden" id="loading-indicator">
+          <progress class="progress is-small is-primary" max="100">Loading</progress>
+        </div>
+      </div>
+      <!--<div class="tabs is-toggle is-fullwidth is-centered is-hidden-tablet">
+        <ul>
+          <li class="is-active"><a id="tab-playlists">Playlists</a></li>
+          <li><a id="tab-tracks">Tracks</a></li>
+        </ul>
+      </div> -->
+      <!-- Контент -->
+      <div class="columns is-mobile fixed-columns">
+        <!-- Плейлисты -->
+        <div class="column is-one-quarter">
+          <aside class="menu">
+            <p class="menu-label">Playlists</p>
+            <ul class="menu-list" id="playlist-list">
+              <!-- JS будет заполнять этот список -->
+            </ul>
+          </aside>
+        </div>
+
+        <!-- Треки -->
+        <div class="column">
+          <div class="table-container">
+ <div class="table-wrapper">
+            <table class="table is-striped is-hoverable is-fullwidth">
+              <thead>
+                <tr>
+                  <th>🎧 Track</th>
+                  <th>⏱ Duration</th>
+                </tr>
+              </thead>
+              <tbody id="track-list">
+                <!-- JS будет заполнять эту таблицу -->
+              </tbody>
+            </table>
+          </div>
+</div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <footer class="footer">
+    <div class="content has-text-centered">
+      <p>© 2025 MP3 Streamer</p>
+    </div>
+  </footer>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
