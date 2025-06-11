@@ -29,7 +29,6 @@ html, body {
 
 /* Scrollable content area */
 .section {
-  padding-top: 220px; /* Учтите высоту плеера + табы */
   padding-bottom: 80px; /* Учтите высоту футера */
   min-height: calc(100vh - 300px); /* Учитываем фиксированные элементы */
   overflow-y: auto;
