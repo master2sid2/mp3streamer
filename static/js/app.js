@@ -40,8 +40,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Первоначальная загрузка плейлистов
   async function loadPlaylists() {
-    const playlists = await fetch("/api/playlists").then(res => res.json());
-    renderPlaylists(playlists);
+    try {
+      const response = await fetch("/api/playlists");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const playlists = await response.json();
+      console.log("Loaded playlists:", playlists);
+      renderPlaylists(playlists);
+      // Устанавливаем первый плейлист как текущий, если он существует
+      if (playlists.length > 0 && !currentPlaylist) {
+        currentPlaylist = playlists[0];
+        renderTracks(currentPlaylist);
+        playlistList.querySelector(`a[data-name="${currentPlaylist.name}"]`)?.classList.add("is-active", "is-selected");
+      }
+    } catch (error) {
+      console.error("Error loading playlists:", error);
+    }
   }
 
   function renderPlaylists(pls) {
@@ -60,8 +73,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       a.href = "#";
       a.dataset.name = pl.name;
 
-      if (playingPlaylist && playingPlaylist.name === pl.name && playingTrackIndex >= 0) {
+      // Выделяем плейлист, если он текущий или воспроизводимый
+      if (currentPlaylist && currentPlaylist.name === pl.name) {
         a.classList.add("is-active", "is-selected");
+      } else if (playingPlaylist && playingPlaylist.name === pl.name && playingTrackIndex >= 0) {
+        a.classList.add("is-playing");
       }
 
       const countSpan = document.createElement("span");
@@ -112,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       row.appendChild(durationCell);
       trackList.appendChild(row);
 
+      // Восстанавливаем выделение, если трек из воспроизводимого плейлиста
       if (
         playingPlaylist &&
         playingPlaylist.name === pl.name &&
@@ -128,6 +145,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
 
+    // Сбрасываем currentTrackIndex для отображаемого плейлиста, если он не воспроизводимый
     if (playingPlaylist && playingPlaylist.name !== pl.name) {
       currentTrackIndex = -1;
     }
@@ -135,16 +153,21 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function playTrack(index) {
     if (!currentPlaylist) return;
-    const tracks = Array.isArray(currentPlaylist.tracks) ? currentPlaylist.tracks : [];
+    playTrackFromPlaylist(currentPlaylist, index);
+  }
+
+  function playTrackFromPlaylist(playlist, index) {
+    const tracks = Array.isArray(playlist.tracks) ? playlist.tracks : [];
     if (index < 0 || index >= tracks.length) return;
 
     const track = tracks[index];
 
-    player.src = `/stream/${encodeURIComponent(currentPlaylist.name)}/${encodeURIComponent(track.filename)}`;
+    player.src = `/stream/${encodeURIComponent(playlist.name)}/${encodeURIComponent(track.filename)}`;
     player.play();
 
     currentTitle.textContent = track.title || track.filename;
 
+    // Плавная смена обложки
     coverImg.classList.add("fade-out");
     setTimeout(() => {
       if (track.cover_base64) {
@@ -155,23 +178,28 @@ document.addEventListener("DOMContentLoaded", async () => {
       coverImg.classList.remove("fade-out");
     }, 300);
 
-    playlistList.querySelectorAll("a").forEach(el => {
-      el.classList.remove("is-active", "is-selected");
-      if (el.dataset.name === currentPlaylist.name) {
-        el.classList.add("is-active", "is-selected");
-      }
-    });
+    // Обновляем воспроизведение
+    playingTrackIndex = index;
+    playingPlaylist = playlist;
 
-    const rows = trackList.querySelectorAll("tr");
-    rows.forEach(row => row.classList.remove("is-active", "is-selected"));
-    if (rows[index]) {
-      rows[index].classList.add("is-active", "is-selected");
-      currentTrackRow = rows[index];
+    // Если текущий плейлист совпадает с воспроизводимым, обновляем выделение треков
+    if (currentPlaylist && currentPlaylist.name === playlist.name) {
+      const rows = trackList.querySelectorAll("tr");
+      rows.forEach(row => row.classList.remove("is-active", "is-selected"));
+      if (rows[index]) {
+        rows[index].classList.add("is-active", "is-selected");
+        currentTrackRow = rows[index];
+        currentTrackIndex = index;
+      }
     }
 
-    currentTrackIndex = index;
-    playingTrackIndex = index;
-    playingPlaylist = currentPlaylist;
+    // Обновляем выделение плейлиста
+    playlistList.querySelectorAll("a").forEach(el => {
+      el.classList.remove("is-playing");
+      if (el.dataset.name === playlist.name && playingTrackIndex >= 0) {
+        el.classList.add("is-playing");
+      }
+    });
   }
 
   player.addEventListener("ended", () => {
@@ -182,9 +210,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       nextIndex = 0;
     }
 
-    currentPlaylist = playingPlaylist;
-    renderTracks(currentPlaylist);
-    playTrack(nextIndex);
+    // Воспроизводим следующий трек без изменения currentPlaylist
+    playTrackFromPlaylist(playingPlaylist, nextIndex);
   });
 
   function setupWebSocket() {
@@ -207,25 +234,50 @@ document.addEventListener("DOMContentLoaded", async () => {
           ? playingPlaylist.tracks[playingTrackIndex].filename
           : null;
 
+      // Обновляем плейлисты
       renderPlaylists(playlists);
 
+      // Если текущий плейлист существует, обновляем его треки
+      if (currentPlaylist) {
+        const updatedCurrentPlaylist = playlists.find(p => p.name === currentPlaylist.name);
+        if (updatedCurrentPlaylist) {
+          currentPlaylist = updatedCurrentPlaylist;
+          renderTracks(currentPlaylist);
+        } else {
+          currentPlaylist = playlists.length > 0 ? playlists[0] : null;
+          if (currentPlaylist) {
+            renderTracks(currentPlaylist);
+            playlistList.querySelector(`a[data-name="${currentPlaylist.name}"]`)?.classList.add("is-active", "is-selected");
+          } else {
+            trackList.innerHTML = "";
+          }
+        }
+      }
+
+      // Восстанавливаем playingPlaylist, если он существует
       if (prevPlaylistName) {
         const pl = playlists.find(p => p.name === prevPlaylistName);
         if (pl) {
           playingPlaylist = pl;
-          currentPlaylist = pl;
-          renderTracks(pl);
 
+          // Если текущий плейлист совпадает с воспроизводимым, обновляем выделение
+          if (currentPlaylist && currentPlaylist.name === pl.name) {
+            renderTracks(pl);
+          }
+
+          // Восстанавливаем выделение трека
           if (prevTrackFilename) {
             const newIndex = pl.tracks.findIndex(t => t.filename === prevTrackFilename);
             if (newIndex >= 0) {
               playingTrackIndex = newIndex;
-              currentTrackIndex = newIndex;
-              const rows = trackList.querySelectorAll("tr");
-              rows.forEach(row => row.classList.remove("is-active", "is-selected"));
-              if (rows[newIndex]) {
-                rows[newIndex].classList.add("is-active", "is-selected");
-                currentTrackRow = rows[newIndex];
+              if (currentPlaylist && currentPlaylist.name === pl.name) {
+                currentTrackIndex = newIndex;
+                const rows = trackList.querySelectorAll("tr");
+                rows.forEach(row => row.classList.remove("is-active", "is-selected"));
+                if (rows[newIndex]) {
+                  rows[newIndex].classList.add("is-active", "is-selected");
+                  currentTrackRow = rows[newIndex];
+                }
               }
             } else {
               playingTrackIndex = -1;
@@ -238,14 +290,12 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         } else {
           playingPlaylist = null;
-          currentPlaylist = null;
-          trackList.innerHTML = "";
-          currentTitle.textContent = "Choose track";
-          coverImg.src = "/static/img/default.png";
           playingTrackIndex = -1;
           currentTrackIndex = -1;
           player.pause();
           player.src = "";
+          currentTitle.textContent = "Choose track";
+          coverImg.src = "/static/img/default.png";
         }
       }
 
@@ -263,6 +313,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
+  // Инициализация
   await loadPlaylists();
   setupWebSocket();
 });
