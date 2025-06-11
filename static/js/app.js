@@ -10,7 +10,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   let currentTrackRow = null;
   let currentPlaylist = null;
+  let playingPlaylist = null;
   let currentTrackIndex = -1;
+  let playingTrackIndex = -1;
 
   // Функция переключения табов (для мобильных устройств)
   function switchTab(activeTab, inactiveTab, showTracks) {
@@ -58,8 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       a.href = "#";
       a.dataset.name = pl.name;
 
-      // Сохраняем выделение только если это текущий плейлист И трек играет
-      if (currentPlaylist && currentPlaylist.name === pl.name && currentTrackIndex >= 0) {
+      if (playingPlaylist && playingPlaylist.name === pl.name && playingTrackIndex >= 0) {
         a.classList.add("is-active", "is-selected");
       }
 
@@ -79,12 +80,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentPlaylist = pl;
         renderTracks(pl);
 
-        // Сбрасываем текущий трек только если переключились на другой плейлист
-        if (!currentPlaylist || currentPlaylist.name !== pl.name) {
-          currentTrackIndex = -1;
-        }
-
-        // На мобильных устройствах переключаемся на таб Tracks
         if (window.innerWidth <= 767 && tracksTab && playlistsTab) {
           switchTab(tracksTab, playlistsTab, true);
         }
@@ -99,8 +94,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentTrackRow = null;
 
     const tracks = Array.isArray(pl.tracks) ? pl.tracks : [];
-    const currentFilename = currentTrackIndex >= 0 && tracks[currentTrackIndex]
-      ? tracks[currentTrackIndex].filename
+    const currentFilename = playingTrackIndex >= 0 && playingPlaylist && playingPlaylist.tracks[playingTrackIndex]
+      ? playingPlaylist.tracks[playingTrackIndex].filename
       : null;
 
     tracks.forEach((track, index) => {
@@ -117,10 +112,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       row.appendChild(durationCell);
       trackList.appendChild(row);
 
-      // Восстанавливаем выделение только если трек из текущего плейлиста
       if (
-        currentPlaylist &&
-        currentPlaylist.name === pl.name &&
+        playingPlaylist &&
+        playingPlaylist.name === pl.name &&
         currentFilename &&
         track.filename === currentFilename
       ) {
@@ -134,13 +128,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
 
-    // Если трек не найден в этом плейлисте, сбрасываем выделение
-    if (currentFilename && !tracks.some(t => t.filename === currentFilename)) {
+    if (playingPlaylist && playingPlaylist.name !== pl.name) {
       currentTrackIndex = -1;
-      currentTitle.textContent = "Choose track";
-      coverImg.src = "/static/img/default.png";
-      player.pause();
-      player.src = "";
     }
   }
 
@@ -156,7 +145,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     currentTitle.textContent = track.title || track.filename;
 
-    // Плавная смена обложки
     coverImg.classList.add("fade-out");
     setTimeout(() => {
       if (track.cover_base64) {
@@ -167,7 +155,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       coverImg.classList.remove("fade-out");
     }, 300);
 
-    // Обновление активных элементов
     playlistList.querySelectorAll("a").forEach(el => {
       el.classList.remove("is-active", "is-selected");
       if (el.dataset.name === currentPlaylist.name) {
@@ -183,19 +170,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     currentTrackIndex = index;
+    playingTrackIndex = index;
+    playingPlaylist = currentPlaylist;
   }
 
   player.addEventListener("ended", () => {
-    if (!currentPlaylist) return;
-    const tracks = Array.isArray(currentPlaylist.tracks) ? currentPlaylist.tracks : [];
-    let nextIndex = currentTrackIndex + 1;
+    if (!playingPlaylist) return;
+    const tracks = Array.isArray(playingPlaylist.tracks) ? playingPlaylist.tracks : [];
+    let nextIndex = playingTrackIndex + 1;
     if (nextIndex >= tracks.length) {
       nextIndex = 0;
     }
+
+    currentPlaylist = playingPlaylist;
+    renderTracks(currentPlaylist);
     playTrack(nextIndex);
   });
 
-  // --- Оптимизированная WebSocket-логика ---
   function setupWebSocket() {
     const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
     const ws = new WebSocket(`${wsProtocol}://${window.location.host}/ws`);
@@ -210,11 +201,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const playlists = JSON.parse(event.data);
 
-      // Сохраняем текущие данные перед обновлением
-      const prevPlaylistName = currentPlaylist ? currentPlaylist.name : null;
+      const prevPlaylistName = playingPlaylist ? playingPlaylist.name : null;
       const prevTrackFilename =
-        currentTrackIndex >= 0 && currentPlaylist && currentPlaylist.tracks[currentTrackIndex]
-          ? currentPlaylist.tracks[currentTrackIndex].filename
+        playingTrackIndex >= 0 && playingPlaylist && playingPlaylist.tracks[playingTrackIndex]
+          ? playingPlaylist.tracks[playingTrackIndex].filename
           : null;
 
       renderPlaylists(playlists);
@@ -222,13 +212,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (prevPlaylistName) {
         const pl = playlists.find(p => p.name === prevPlaylistName);
         if (pl) {
+          playingPlaylist = pl;
           currentPlaylist = pl;
           renderTracks(pl);
 
-          // Восстанавливаем выделение трека, если он был в этом плейлисте
           if (prevTrackFilename) {
             const newIndex = pl.tracks.findIndex(t => t.filename === prevTrackFilename);
             if (newIndex >= 0) {
+              playingTrackIndex = newIndex;
               currentTrackIndex = newIndex;
               const rows = trackList.querySelectorAll("tr");
               rows.forEach(row => row.classList.remove("is-active", "is-selected"));
@@ -237,15 +228,24 @@ document.addEventListener("DOMContentLoaded", async () => {
                 currentTrackRow = rows[newIndex];
               }
             } else {
+              playingTrackIndex = -1;
               currentTrackIndex = -1;
+              player.pause();
+              player.src = "";
+              currentTitle.textContent = "Choose track";
+              coverImg.src = "/static/img/default.png";
             }
           }
         } else {
+          playingPlaylist = null;
           currentPlaylist = null;
           trackList.innerHTML = "";
           currentTitle.textContent = "Choose track";
           coverImg.src = "/static/img/default.png";
+          playingTrackIndex = -1;
           currentTrackIndex = -1;
+          player.pause();
+          player.src = "";
         }
       }
 
@@ -263,7 +263,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
   }
 
-  // Инициализация
   await loadPlaylists();
   setupWebSocket();
 });
